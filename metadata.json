@@ -1,0 +1,5 @@
+{
+  "name": "SnapBooth",
+  "description": "A premium web-based photobooth with integrated Midtrans payments and customizable templates.",
+  "requestFramePermissions": ["camera"]
+}
