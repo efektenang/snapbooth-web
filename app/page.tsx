@@ -402,11 +402,71 @@ export default function Page() {
 
               <div className="flex flex-col md:flex-row gap-4 w-full max-w-md">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    const isDark = selectedTemplate.id.includes("dark") || selectedTemplate.id.includes("neon");
+                    const isVintage = selectedTemplate.id.includes("vintage");
+
+                    const img = new window.Image();
+                    img.crossOrigin = "anonymous";
+                    img.src = finalImage;
+
+                    await new Promise((resolve) => {
+                      img.onload = resolve;
+                    });
+
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    if (!ctx) return;
+
+                    const paddingX = Math.round(img.width * 0.05);
+                    const paddingYTop = paddingX;
+                    const fontSize = Math.max(12, Math.round(img.width * 0.025));
+                    const paddingYBottom = paddingX + fontSize * 3;
+
+                    canvas.width = img.width + paddingX * 2;
+                    canvas.height = img.height + paddingYTop + paddingYBottom;
+
+                    ctx.fillStyle = isDark ? "#1C1917" : "#FFFFFF";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    if (isVintage) {
+                      ctx.filter = "sepia(100%)";
+                    }
+
+                    ctx.save();
+                    const radius = Math.round(img.width * 0.015);
+                    ctx.beginPath();
+                    ctx.moveTo(paddingX + radius, paddingYTop);
+                    ctx.lineTo(paddingX + img.width - radius, paddingYTop);
+                    ctx.quadraticCurveTo(paddingX + img.width, paddingYTop, paddingX + img.width, paddingYTop + radius);
+                    ctx.lineTo(paddingX + img.width, paddingYTop + img.height - radius);
+                    ctx.quadraticCurveTo(paddingX + img.width, paddingYTop + img.height, paddingX + img.width - radius, paddingYTop + img.height);
+                    ctx.lineTo(paddingX + radius, paddingYTop + img.height);
+                    ctx.quadraticCurveTo(paddingX, paddingYTop + img.height, paddingX, paddingYTop + img.height - radius);
+                    ctx.lineTo(paddingX, paddingYTop + radius);
+                    ctx.quadraticCurveTo(paddingX, paddingYTop, paddingX + radius, paddingYTop);
+                    ctx.closePath();
+                    ctx.clip();
+                    ctx.drawImage(img, paddingX, paddingYTop, img.width, img.height);
+                    ctx.restore();
+
+                    ctx.filter = "none";
+                    ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.5)" : "rgba(28, 25, 23, 0.5)";
+                    ctx.font = `${fontSize}px monospace`;
+                    ctx.textBaseline = "middle";
+
+                    const textY = canvas.height - paddingYBottom / 2;
+                    ctx.textAlign = "left";
+                    ctx.fillText(`SNAPBOOTH X ${profile.name.toUpperCase()}`, paddingX, textY);
+                    ctx.textAlign = "right";
+                    ctx.fillText(new Date().toLocaleDateString(), canvas.width - paddingX, textY);
+
+                    const downloadUrl = canvas.toDataURL("image/png");
                     const link = document.createElement("a");
-                    link.href = finalImage;
+                    link.href = downloadUrl;
                     link.download = `snapbooth-${profile.name.toLowerCase().replace(/\s+/g, '-')}.png`;
                     link.click();
+
                     confetti({
                       particleCount: 150,
                       spread: 70,
